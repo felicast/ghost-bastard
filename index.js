@@ -47,14 +47,17 @@ GhostBastard.prototype.open = function (url) {
     //todo: realize full api (method, data, settings)
     debug('open ' + url);
     var self = this;
+    var args = Array.prototype.slice.call(arguments);
     return new RSVP.Promise(function (resolve, reject) {
-        self.page.open(url, function (status) {
+        //push callback to arguments
+        args.push(function (status) {
             if (status === 'success') {
                 resolve(self);
             } else {
                 resolve(reject);
             }
         });
+        self.page.open.apply(self.page, args);
     });
 };
 
