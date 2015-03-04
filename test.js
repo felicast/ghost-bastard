@@ -1,3 +1,12 @@
-/**
- * Created by felix on 04.03.15.
- */
+var GhostBastard = require('./index.js');
+
+var ghostBastard = new GhostBastard();
+
+ghostBastard.open('http://felicast.github.io/ghost-bastard/test.html')
+    .then(function () {
+        ghostBastard.debug(ghostBastard.exists('[name="text_input"]'));
+    })
+    .finally(function () {
+        ghostBastard.close();
+        phantom.exit();
+    });

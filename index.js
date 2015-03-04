@@ -253,10 +253,13 @@ GhostBastard.prototype.getContent = function () {
 };
 
 GhostBastard.prototype.exists = function (selector) {
-    return this.page.evaluate(function () {
+    debug(selector);
+    return this.page.evaluate(function (selector) {
         return document.querySelector(selector) !== null;
-    });
+    }, selector);
 };
+
+GhostBastard.prototype.debug = debug;
 
 
 GhostBastard.extend = function(protoProps, staticProps) {
