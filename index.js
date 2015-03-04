@@ -252,6 +252,12 @@ GhostBastard.prototype.getContent = function () {
     return this.page.content;
 };
 
+GhostBastard.prototype.exists = function (selector) {
+    return this.page.evaluate(function () {
+        return document.querySelector(selector) !== null;
+    });
+};
+
 
 GhostBastard.extend = function(protoProps, staticProps) {
     var parent = this;
