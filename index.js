@@ -142,15 +142,14 @@ GhostBastard.prototype.evaluate = function () {
     });
 };
 
-GhostBastard.prototype.injectJs = function () {
+GhostBastard.prototype.injectJs = function (fileName) {
     debug('injectJs');
     var self = this;
     var args = Array.prototype.slice.call(arguments);
     return new RSVP.Promise(function (resolve) {
-        var result = self.page.injectJs.apply(self.page, args);
-        setTimeout(function () {
+        var result = self.page.includeJs.apply(self.page, fileName, function () {
             resolve(result);
-        }, 0);
+        });
     });
 };
 
