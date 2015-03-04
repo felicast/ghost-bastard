@@ -97,6 +97,7 @@ GhostBastard.prototype.click = function (xOrSelector, y) {
     return new RSVP.Promise(function (resolve) {
         var x = 0;
         if (_.isString(xOrSelector)) {
+            debug('click to ' + xOrSelector);
             var elementPosition = self.page.evaluate(function (selector) {
                 var element = document.querySelector(selector);
                 if (element) {
@@ -106,17 +107,21 @@ GhostBastard.prototype.click = function (xOrSelector, y) {
                         y: (boundingClientRect.top * 2 + boundingClientRect.height) / 2
                     };
                 }
-                return {x: 0, y: 0};
+                return null;
             }, xOrSelector);
+            if (elementPosition === null) {
+                throw new Error('element ' + xOrSelector + ' not found');
+            }
             x = elementPosition.x;
             y = elementPosition.y;
         } else if (_.isObject(xOrSelector)) {
             x = xOrSelector.x;
             y = xOrSelector.y;
+            debug('click to ' + x + ', ' + y);
         } else {
             x = xOrSelector;
+            debug('click to ' + x + ', ' + y);
         }
-        debug('click to ' + x + ', ' + y);
         self.page.sendEvent('click', x, y);
 
         setTimeout(function () {
