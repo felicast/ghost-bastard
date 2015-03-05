@@ -6,11 +6,11 @@
 </head>
 <body>
     <form>
-        <input name="text_input">
+        <input name="text_input" onfocus="this.style.background = 'red';">
     </form>
-    <div id="invisibleElement" style="display: block;" ;="" onfocus="this.style.background = 'red';">invisible block</div>
-    <button style="background: none repeat scroll 0% 0% red;" id="alertBtn" onclick="this.style.background = 'red';">alert</button>
-    <div id="logger"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
+    <div id="invisibleElement" style="display: none;">invisible block</div>
+    <button id="alertBtn" onclick="this.style.background = 'red';">alert</button>
+    <div id="logger"></div>
     <script>
         var logger = document.getElementById('logger');
         setTimeout(function () {
