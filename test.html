@@ -3,10 +3,17 @@
 <head lang="en">
     <meta charset="UTF-8">
     <title></title>
+    <script>
+        setTimeout(function () {
+            var invisibleElement = document.querySelector('#invisibleElement');
+            invisibleElement.style.display = 'block';
+        }, 10000);
+    </script>
 </head>
 <body>
     <form>
         <input name="text_input">
     </form>
+    <div id="invisibleElement" style="display: none";>invisible block</div>
 </body>
 </html>
