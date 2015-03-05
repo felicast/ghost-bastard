@@ -20,7 +20,7 @@
         var registerEvent = function (event) {
             var logItem = document.createElement("div");
             logItem.innerHtml = typeof event;
-            logger.appendClild(logItem);
+            logger.appendChild(logItem);
         };
         document.addEventListener('click', registerEvent);
         document.addEventListener('mousedown', registerEvent);
