@@ -3,13 +3,6 @@
 <head lang="en">
     <meta charset="UTF-8">
     <title></title>
-    <script>
-        setTimeout(function () {
-            var invisibleElement = document.querySelector('#invisibleElement');
-            invisibleElement.style.display = 'block';
-        }, 10000);
-        monitorEvents(document.body);
-    </script>
 </head>
 <body>
     <form>
@@ -17,5 +10,21 @@
     </form>
     <div id="invisibleElement" style="display: none"; onfocus="this.style.background = 'red';">invisible block</div>
     <button id="alertBtn" onclick="this.style.background = 'red';">alert</button>
+    <div id="logger"></div>
+    <script>
+        var logger = document.getElementById('logger');
+        setTimeout(function () {
+            var invisibleElement = document.querySelector('#invisibleElement');
+            invisibleElement.style.display = 'block';
+        }, 10000);
+        var registerEvent = function (event) {
+            var logItem = document.createElement("div");
+            logItem.innerHtml = typeof event;
+            logger.appendClild(logItem);
+        };
+        document.addEventListener('click', registerEvent);
+        document.addEventListener('mousedown', registerEvent);
+        document.addEventListener('mouseup', registerEvent);
+    </script>
 </body>
 </html>
