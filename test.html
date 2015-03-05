@@ -6,7 +6,7 @@
 </head>
 <body>
     <form>
-        <input name="text_input" onfocus="this.style.background = 'red';">
+        <input id="textField" name="text_input" onfocus="this.style.background = 'red';">
     </form>
     <div id="invisibleElement" style="display: none;">invisible block</div>
     <button id="alertBtn" onclick="this.style.background = 'red';">alert</button>
@@ -19,7 +19,7 @@
         }, 10000);
         var registerEvent = function (event) {
             var logItem = document.createElement("div");
-            var logMessage = event.type;
+            var logMessage = event.type + ' (' + event.target.id + ')';
             if (event instanceof MouseEvent) {
                 logMessage += ' ' + event.clientX + ', ' + event.clientY;
             }
@@ -31,6 +31,5 @@
         document.addEventListener('mousedown', registerEvent);
         document.addEventListener('mouseup', registerEvent);
     </script>
-
-
-</body></html>
+</body>
+</html>
