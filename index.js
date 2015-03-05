@@ -99,7 +99,6 @@ GhostBastard.prototype.click = function (xOrSelector, y) {
     return new RSVP.Promise(function (resolve) {
         var x = 0;
         if (_.isString(xOrSelector)) {
-            debug('click to ' + xOrSelector);
             var elementPosition = self.page.evaluate(function (selector) {
                 var element = document.querySelector(selector);
                 if (element) {
@@ -114,8 +113,9 @@ GhostBastard.prototype.click = function (xOrSelector, y) {
             if (elementPosition === null) {
                 throw new Error('element ' + xOrSelector + ' not found');
             }
-            x = elementPosition.x;
-            y = elementPosition.y;
+            x = Math.round(elementPosition.x);
+            y = Math.round(elementPosition.y);
+            debug('click to ' + xOrSelector + ' ' + x + ', ' + y);
         } else if (_.isObject(xOrSelector)) {
             x = xOrSelector.x;
             y = xOrSelector.y;
@@ -173,6 +173,34 @@ GhostBastard.prototype.setJQDatepicker = function (selector, date) {
     });
 };
 
+GhostBastard.prototype.selectOption = function (selector, value) {
+    debug('selectOption on ' + selector + ' ' + value);
+    var self = this;
+    return new RSVP.Promise(function (resolve, reject) {
+        var result = self.page.evaluate(function (selector, value) {
+            var select = document.getElementById(selector);
+            if (select) {
+                select.value = value;
+                //return ghostBastard.evaluate(function () {
+                //    var evObj = document.createEvent('MouseEvents');
+                //    evObj.initEvent('mousedown', true, false);
+                //    document.getElementById('select').dispatchEvent(evObj);
+                //});
+                return true;
+            }
+
+            return false;
+        }, selector, value);
+        setTimeout(function () {
+            if (result) {
+                resolve(result);
+            } else {
+                reject(result);
+            }
+        }, 0);
+    });
+};
+
 GhostBastard.prototype.wait = function (milliseconds) {
     debug('wait ' + milliseconds + ' ms');
     return new RSVP.Promise(function (resolve) {
@@ -183,18 +211,6 @@ GhostBastard.prototype.wait = function (milliseconds) {
 };
 
 GhostBastard.prototype.waitForLoad = function (timeout) {
-    //debug('waitForLoad');
-    //var self = this;
-    //timeout = timeout || self.options.waitTimeout;
-    //return new RSVP.Promise(function (resolve, reject) {
-    //    setTimeout(function () {
-    //        until(function () {
-    //            return self.page.evaluate(function () {
-    //                return document.readyState === "complete";
-    //            });
-    //        }, timeout, self.options.checkLoadInterval, resolve, reject);
-    //    }, self.options.waitStartLoadTimeout);
-    //});
     debug('waitForLoad');
     var self = this;
     timeout = timeout || self.options.waitTimeout;
