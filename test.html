@@ -4,12 +4,19 @@
     <meta charset="UTF-8">
     <title></title>
 </head>
-<body style="background: #ffffff">
+<body>
     <form>
         <input id="textField" name="text_input" onfocus="this.style.background = 'red';">
     </form>
     <div id="invisibleElement" style="display: none;">invisible block</div>
     <button id="alertBtn" onclick="this.style.background = 'red';">alert</button>
+    <select id="select">
+        <option value="o1">option 1</option>
+        <option value="o2">option 2</option>
+        <option value="o3">option 3</option>
+    </select>
+
+
     <div id="logger"></div>
     <script>
         var logger = document.getElementById('logger');
@@ -31,5 +38,6 @@
         document.addEventListener('mousedown', registerEvent);
         document.addEventListener('mouseup', registerEvent);
     </script>
-</body>
-</html>
+
+
+</body></html>
