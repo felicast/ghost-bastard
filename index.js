@@ -38,13 +38,12 @@ var GhostBastard = function (options) {
     this.page = new WebPage();
     this.options = _.defaults(options, {
         waitStartLoadTimeout: 500,
-        waitEndLoadTimeout: 30000,
+        waitTimeout: 30000,
         checkLoadInterval: 50
     });
 };
 
 GhostBastard.prototype.open = function (url) {
-    //todo: realize full api (method, data, settings)
     debug('open ' + url);
     var self = this;
     var args = Array.prototype.slice.call(arguments);
@@ -186,7 +185,7 @@ GhostBastard.prototype.wait = function (milliseconds) {
 GhostBastard.prototype.waitForLoad = function (timeout) {
     //debug('waitForLoad');
     //var self = this;
-    //timeout = timeout || self.options.waitEndLoadTimeout;
+    //timeout = timeout || self.options.waitTimeout;
     //return new RSVP.Promise(function (resolve, reject) {
     //    setTimeout(function () {
     //        until(function () {
@@ -198,7 +197,7 @@ GhostBastard.prototype.waitForLoad = function (timeout) {
     //});
     debug('waitForLoad');
     var self = this;
-    timeout = timeout || self.options.waitEndLoadTimeout;
+    timeout = timeout || self.options.waitTimeout;
     return new RSVP.Promise(function (resolve) {
         setTimeout(function () {
             resolve(self._waitUntil(function () {
@@ -210,9 +209,30 @@ GhostBastard.prototype.waitForLoad = function (timeout) {
     });
 };
 
+GhostBastard.prototype.waitElement = function (selector, needCheckVisible, timeout) {
+    debug('waitElement');
+    var self = this;
+    timeout = timeout || self.options.waitTimeout;
+    needCheckVisible = !!needCheckVisible;
+    return new RSVP.Promise(function (resolve) {
+        resolve(self._waitUntil(function () {
+            return self.page.evaluate(function (selector, needCheckVisible) {
+                var element = document.querySelector(selector);
+                if (element) {
+                    if (needCheckVisible) {
+                        return element.offsetParent !== null;
+                    }
+                    return true;
+                }
+                return false;
+            }, selector, needCheckVisible);
+        }, timeout, self.options.checkLoadInterval));
+    });
+};
+
 GhostBastard.prototype._waitUntil = function (check, timeout, interval) {
     var self = this;
-    timeout = timeout || self.options.waitEndLoadTimeout;
+    timeout = timeout || self.options.waitTimeout;
     return new RSVP.Promise(function (resolve, reject) {
         var start = Date.now();
         var checker = setInterval(function() {
