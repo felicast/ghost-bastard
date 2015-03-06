@@ -204,7 +204,7 @@ GhostBastard.prototype.selectOption = function (selector, value) {
     var self = this;
     return new RSVP.Promise(function (resolve, reject) {
         var result = self.page.evaluate(function (selector, value) {
-            var select = document.getElementById(selector);
+            var select = document.querySelector(selector);
             if (select) {
                 select.value = value;
                 var e = document.createEvent('HTMLEvents');
@@ -231,7 +231,7 @@ GhostBastard.prototype.fillInput = function (selector, value) {
     var self = this;
     return new RSVP.Promise(function (resolve, reject) {
         var result = self.page.evaluate(function (selector, value) {
-            var input = document.getElementById(selector);
+            var input = document.querySelector(selector);
             if (input) {
                 input.value = value;
                 var e = document.createEvent('HTMLEvents');
