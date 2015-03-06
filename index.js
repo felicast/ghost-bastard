@@ -132,6 +132,32 @@ GhostBastard.prototype.click = function (xOrSelector, y) {
     });
 };
 
+GhostBastard.prototype.clickElement = function (selector, y) {
+    var self = this;
+    return new RSVP.Promise(function (resolve) {
+        var elementPosition = self.page.evaluate(function (selector) {
+            var element = document.querySelector(selector);
+            if (element) {
+                var boundingClientRect = element.getBoundingClientRect();
+                return {
+                    x: (boundingClientRect.left * 2 + boundingClientRect.width) / 2,
+                    y: (boundingClientRect.top * 2 + boundingClientRect.height) / 2
+                };
+            }
+            return null;
+        }, selector);
+        if (elementPosition === null) {
+            throw new Error('element ' + selector + ' not found');
+        }
+        x = Math.round(elementPosition.x);
+        y = Math.round(elementPosition.y);
+        debug('click to ' + selector + ' ' + x + ', ' + y);
+        self.page.sendEvent('click', x, y);
+
+        resolve(self);
+    });
+};
+
 GhostBastard.prototype.evaluate = function () {
     debug('evaluate');
     var self = this;
@@ -181,14 +207,11 @@ GhostBastard.prototype.selectOption = function (selector, value) {
             var select = document.getElementById(selector);
             if (select) {
                 select.value = value;
-                //return ghostBastard.evaluate(function () {
-                //    var evObj = document.createEvent('MouseEvents');
-                //    evObj.initEvent('mousedown', true, false);
-                //    document.getElementById('select').dispatchEvent(evObj);
-                //});
+                var e = document.createEvent('HTMLEvents');
+                e.initEvent('change', true, true);
+                select.dispatchEvent(e);
                 return true;
             }
-
             return false;
         }, selector, value);
         setTimeout(function () {
