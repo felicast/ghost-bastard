@@ -108,9 +108,9 @@ GhostBastard.prototype.click = function (xOrSelector, y) {
                         y: (boundingClientRect.top * 2 + boundingClientRect.height) / 2
                     };
                 }
-                return null;
+                return false;
             }, xOrSelector);
-            if (elementPosition === null) {
+            if (elementPosition === false) {
                 throw new Error('element ' + xOrSelector + ' not found');
             }
             x = Math.round(elementPosition.x);
@@ -144,9 +144,9 @@ GhostBastard.prototype.clickElement = function (selector, y) {
                     y: (boundingClientRect.top * 2 + boundingClientRect.height) / 2
                 };
             }
-            return null;
+            return false;
         }, selector);
-        if (elementPosition === null) {
+        if (elementPosition === false) {
             throw new Error('element ' + selector + ' not found');
         }
         x = Math.round(elementPosition.x);
@@ -285,6 +285,27 @@ GhostBastard.prototype.waitElement = function (selector, needCheckVisible, timeo
                 if (element) {
                     if (needCheckVisible) {
                         return element.offsetParent !== null;
+                    }
+                    return true;
+                }
+                return false;
+            }, selector, needCheckVisible);
+        }, timeout, self.options.checkLoadInterval));
+    });
+};
+
+GhostBastard.prototype.waitNotElement = function (selector, needCheckVisible, timeout) {
+    debug('waitNotElement');
+    var self = this;
+    timeout = timeout || self.options.waitTimeout;
+    needCheckVisible = !!needCheckVisible;
+    return new RSVP.Promise(function (resolve) {
+        resolve(self._waitUntil(function () {
+            return self.page.evaluate(function (selector, needCheckVisible) {
+                var element = document.querySelector(selector);
+                if (element) {
+                    if (needCheckVisible) {
+                        return element.offsetParent === null;
                     }
                     return true;
                 }
