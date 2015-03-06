@@ -364,6 +364,10 @@ GhostBastard.prototype.getContent = function () {
     return this.page.content;
 };
 
+GhostBastard.prototype.getPlainText = function () {
+    return this.page.plainText;
+};
+
 GhostBastard.prototype.exists = function (selector) {
     debug(selector);
     return this.page.evaluate(function (selector) {
