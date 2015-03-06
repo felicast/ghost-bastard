@@ -307,9 +307,9 @@ GhostBastard.prototype.waitNotElement = function (selector, needCheckVisible, ti
                     if (needCheckVisible) {
                         return element.offsetParent === null;
                     }
-                    return true;
+                    return false;
                 }
-                return false;
+                return true;
             }, selector, needCheckVisible);
         }, timeout, self.options.checkLoadInterval));
     });
