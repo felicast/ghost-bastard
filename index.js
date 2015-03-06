@@ -151,7 +151,7 @@ GhostBastard.prototype.clickElement = function (selector, y) {
         }
         x = Math.round(elementPosition.x);
         y = Math.round(elementPosition.y);
-        debug('click to ' + selector + ' ' + x + ', ' + y);
+        debug('clickElement to ' + selector + ' ' + x + ', ' + y);
         self.page.sendEvent('click', x, y);
 
         resolve(self);
@@ -221,6 +221,31 @@ GhostBastard.prototype.selectOption = function (selector, value) {
                 reject(result);
             }
         }, 0);
+    });
+};
+
+
+
+GhostBastard.prototype.fillInput = function (selector, value) {
+    debug('fillElement on ' + selector + ' ' + value);
+    var self = this;
+    return new RSVP.Promise(function (resolve, reject) {
+        var result = self.page.evaluate(function (selector, value) {
+            var input = document.getElementById(selector);
+            if (input) {
+                input.value = value;
+                var e = document.createEvent('HTMLEvents');
+                e.initEvent('change', true, true);
+                input.dispatchEvent(e);
+                return true;
+            }
+            return false;
+        }, selector, value);
+        if (result) {
+            resolve(result);
+        } else {
+            reject(result);
+        }
     });
 };
 
