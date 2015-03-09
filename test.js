@@ -7,7 +7,7 @@ ghostBastard.open('http://felicast.github.io/ghost-bastard/test.html')
         ghostBastard.debug(ghostBastard.exists('[name="text_input"]'));
     })
     .then(function () {
-        return ghostBastard.click('[name="text_input"]');
+        return ghostBastard.clickElement('[name="text_input"]');
     })
     .then(function () {
         return ghostBastard.type('hello');
@@ -16,19 +16,19 @@ ghostBastard.open('http://felicast.github.io/ghost-bastard/test.html')
         return ghostBastard.waitElement('#invisibleElement', false);
     })
     .then(function () {
-        return ghostBastard.click('#alertBtn');
+        return ghostBastard.clickElement('#alertBtn');
     })
     .then(function () {
-        return ghostBastard.click('#select');
+        return ghostBastard.clickElement('#select');
     })
     .then(function () {
-        return ghostBastard.selectOption('select', 'o2');
+        return ghostBastard.fillInput('select', 'o2');
     })
     .then(function () {
         return ghostBastard.wait(1000);
     })
     .finally(function () {
-        ghostBastard.screenshot('test.png')
+        ghostBastard.screenshot('tmp/test.png');
         ghostBastard.close();
         phantom.exit();
     });

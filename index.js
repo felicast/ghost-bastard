@@ -29,6 +29,10 @@ var colors = [
     '4;37'
 ];
 
+function assert(condition, message) {
+    if (!condition) throw new Error(message)
+}
+
 var createDebug = (function (namespace) {
     var prevTime;
     var color = colors.pop();
@@ -40,25 +44,6 @@ var createDebug = (function (namespace) {
         console.log('\x1b[' + color + 'm', namespace + ':', '\x1b[0m', message, '(+' + ms + ' ms)');
     }
 });
-
-
-function until(check, timeout, interval, resolve, reject) {
-    var start = Date.now();
-    var checker = setInterval(function() {
-        var diff = Date.now() - start;
-        var res = check();
-        //debug('checkReslut: ' + res);
-        if (res) {
-            clearInterval(checker);
-            resolve(res);
-        }
-        if (diff > timeout) {
-            clearInterval(checker);
-            reject(res);
-        }
-    }, interval);
-}
-
 
 var GhostBastard = function (options) {
     options = options || {};
@@ -88,79 +73,41 @@ GhostBastard.prototype.open = function (url) {
     });
 };
 
-GhostBastard.prototype.screenshot = function (path) {
-    this.debug('screenshot ' + path);
-    return this.page.render.apply(this.page, Array.prototype.slice.call(arguments));
-};
-
-GhostBastard.prototype.type = function () {
-    var selector = null;
-    var text = null;
+GhostBastard.prototype.type = function (text) {
     var self = this;
-    if (arguments.length === 1) {
-        text = arguments[0];
-    } else if (arguments.length === 2) {
-        selector = arguments[0];
-        text = arguments[1];
-    }
+    this.debug('type "'+ text + '"');
     return new RSVP.Promise(function (resolve) {
-        var keypress = function (text) {
-            self.page.sendEvent('keypress', text);
-            setTimeout(function () {
-                resolve(self);
-            }, 0);
-        };
-        //don't work fix it
-        if (selector) {
-            self.click(selector)
-                .then(function () {
-                    keypress(text);
-                });
-        } else {
-            keypress(text);
-        }
+        self.page.sendEvent('keypress', text);
+        resolve(self);
     });
 };
 
+/**
+ * @deprecated use GhostBastard.clickTo or GhostBastard.clickElement
+ * @param xOrSelector
+ * @param y
+ * @returns {*}
+ */
 GhostBastard.prototype.click = function (xOrSelector, y) {
+    if (_.isString(xOrSelector)) {
+        return this.clickElement(xOrSelector);
+    } else if (_.isObject(xOrSelector)) {
+        return this.clickTo(xOrSelector.x, xOrSelector.y);
+    } else {
+        return this.clickTo(xOrSelector,y);
+    }
+};
+
+GhostBastard.prototype.clickTo = function (x, y) {
     var self = this;
     return new RSVP.Promise(function (resolve) {
-        var x = 0;
-        if (_.isString(xOrSelector)) {
-            var elementPosition = self.page.evaluate(function (selector) {
-                var element = document.querySelector(selector);
-                if (element) {
-                    var boundingClientRect = element.getBoundingClientRect();
-                    return {
-                        x: (boundingClientRect.left * 2 + boundingClientRect.width) / 2,
-                        y: (boundingClientRect.top * 2 + boundingClientRect.height) / 2
-                    };
-                }
-                return false;
-            }, xOrSelector);
-            if (elementPosition === false) {
-                throw new Error('element ' + xOrSelector + ' not found');
-            }
-            x = Math.round(elementPosition.x);
-            y = Math.round(elementPosition.y);
-            self.debug('click to ' + xOrSelector + ' ' + x + ', ' + y);
-        } else if (_.isObject(xOrSelector)) {
-            x = xOrSelector.x;
-            y = xOrSelector.y;
-            self.debug('click to ' + x + ', ' + y);
-        } else {
-            x = xOrSelector;
-            self.debug('click to ' + x + ', ' + y);
-        }
+        self.debug('clickto ' + x + ', ' + y);
         self.page.sendEvent('click', x, y);
-
-        setTimeout(function () {
-            resolve(self);
-        }, 0);
+        resolve(self);
     });
 };
 
-GhostBastard.prototype.clickElement = function (selector, y) {
+GhostBastard.prototype.clickElement = function (selector) {
     var self = this;
     return new RSVP.Promise(function (resolve) {
         var elementPosition = self.page.evaluate(function (selector) {
@@ -177,8 +124,8 @@ GhostBastard.prototype.clickElement = function (selector, y) {
         if (elementPosition === false) {
             throw new Error('element ' + selector + ' not found');
         }
-        x = Math.round(elementPosition.x);
-        y = Math.round(elementPosition.y);
+        var x = Math.round(elementPosition.x);
+        var y = Math.round(elementPosition.y);
         self.debug('clickElement to ' + selector + ' ' + x + ', ' + y);
         self.page.sendEvent('click', x, y);
 
@@ -187,21 +134,18 @@ GhostBastard.prototype.clickElement = function (selector, y) {
 };
 
 GhostBastard.prototype.evaluate = function () {
+    this.debug('evaluate ' + arguments[0].name);
     var self = this;
-    self.debug('evaluate');
     var args = Array.prototype.slice.call(arguments);
     return new RSVP.Promise(function (resolve) {
         var result = self.page.evaluate.apply(self.page, args);
-        setTimeout(function () {
-            resolve(result);
-        }, 0);
+        resolve(result);
     });
 };
 
 GhostBastard.prototype.injectJs = function (fileName) {
+    this.debug('injectJs ' + fileName);
     var self = this;
-    self.debug('injectJs');
-    var args = Array.prototype.slice.call(arguments);
     return new RSVP.Promise(function (resolve) {
         var result = self.page.includeJs.apply(self.page, fileName, function () {
             resolve(result);
@@ -213,20 +157,28 @@ GhostBastard.prototype.setJQDatepicker = function (selector, date) {
     var self = this;
     self.debug('.setJQDatepicker() on ' + selector + ' ' + date);
     if (!_.isDate(date)) {
-        date = moment(date, 'YYYY-MM-DD').toDate();;
+        date = moment(date, 'YYYY-MM-DD').toDate();
     }
     return new RSVP.Promise(function (resolve) {
         var result = self.page.evaluate(function (selector, fromDateTimestamp) {
             var fromDate = new Date(fromDateTimestamp);
+            if ($(selector).length === 0) {
+                return false;
+            }
             $(selector).datepicker("setDate", fromDate);
+            return true;
         }, selector, date.getTime());
-
-        setTimeout(function () {
-            resolve(result);
-        }, 0);
+        assert(result, 'Can not find element ' + selector);
+        resolve(result);
     });
 };
 
+/**
+ * @deprecated use GhostBastard.fillInput
+ * @param selector
+ * @param value
+ * @returns {RSVP.Promise}
+ */
 GhostBastard.prototype.selectOption = function (selector, value) {
     var self = this;
     self.debug('selectOption on ' + selector + ' ' + value);
@@ -251,7 +203,6 @@ GhostBastard.prototype.selectOption = function (selector, value) {
         }, 0);
     });
 };
-
 
 
 GhostBastard.prototype.fillInput = function (selector, value) {
@@ -374,9 +325,7 @@ GhostBastard.prototype.close = function () {
     var self = this;
     return new RSVP.Promise(function (resolve) {
         self.page.close.apply(self.page, Array.prototype.slice.call(arguments));
-        setTimeout(function () {
-            resolve(self);
-        }, 0);
+        resolve(self);
     });
 };
 
@@ -401,6 +350,11 @@ GhostBastard.prototype.exists = function (selector) {
     return this.page.evaluate(function (selector) {
         return document.querySelector(selector) !== null;
     }, selector);
+};
+
+GhostBastard.prototype.screenshot = function (path) {
+    this.debug('screenshot ' + path);
+    return this.page.render.apply(this.page, Array.prototype.slice.call(arguments));
 };
 
 //GhostBastard.prototype.debug = debug;
