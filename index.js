@@ -2,17 +2,44 @@ var _ = require('underscore');
 var RSVP = require('rsvp');
 var moment = require('moment');
 
+var colors = [
+    '0;30',
+    '0;31',
+    '0;32',
+    '0;33',
+    '0;34',
+    '0;35',
+    '0;36',
+    '0;37',
+    '1;30',
+    '1;31',
+    '1;32',
+    '1;33',
+    '1;34',
+    '1;35',
+    '1;36',
+    '1;37',
+    '4;30',
+    '4;31',
+    '4;32',
+    '4;33',
+    '4;34',
+    '4;35',
+    '4;36',
+    '4;37'
+];
 
-var debug = (function (namespace) {
+var createDebug = (function (namespace) {
     var prevTime;
+    var color = colors.pop();
     return function (message) {
         var curr = +new Date();
         var ms = curr - (prevTime || curr);
         prevTime = curr;
 
-        console.log(namespace + ':', message, '(+' + ms + ' ms)');
+        console.log('\x1b[' + color + 'm', namespace + ':', '\x1b[0m', message, '(+' + ms + ' ms)');
     }
-})('Ghost Bastard');
+});
 
 
 function until(check, timeout, interval, resolve, reject) {
@@ -41,10 +68,11 @@ var GhostBastard = function (options) {
         waitTimeout: 30000,
         checkLoadInterval: 50
     });
+    this.debug = createDebug(options.name || 'Ghost Bastard');
 };
 
 GhostBastard.prototype.open = function (url) {
-    debug('open ' + url);
+    this.debug('open ' + url);
     var self = this;
     var args = Array.prototype.slice.call(arguments);
     return new RSVP.Promise(function (resolve, reject) {
@@ -61,7 +89,7 @@ GhostBastard.prototype.open = function (url) {
 };
 
 GhostBastard.prototype.screenshot = function (path) {
-    debug('screenshot ' + path);
+    this.debug('screenshot ' + path);
     return this.page.render.apply(this.page, Array.prototype.slice.call(arguments));
 };
 
@@ -115,14 +143,14 @@ GhostBastard.prototype.click = function (xOrSelector, y) {
             }
             x = Math.round(elementPosition.x);
             y = Math.round(elementPosition.y);
-            debug('click to ' + xOrSelector + ' ' + x + ', ' + y);
+            self.debug('click to ' + xOrSelector + ' ' + x + ', ' + y);
         } else if (_.isObject(xOrSelector)) {
             x = xOrSelector.x;
             y = xOrSelector.y;
-            debug('click to ' + x + ', ' + y);
+            self.debug('click to ' + x + ', ' + y);
         } else {
             x = xOrSelector;
-            debug('click to ' + x + ', ' + y);
+            self.debug('click to ' + x + ', ' + y);
         }
         self.page.sendEvent('click', x, y);
 
@@ -151,7 +179,7 @@ GhostBastard.prototype.clickElement = function (selector, y) {
         }
         x = Math.round(elementPosition.x);
         y = Math.round(elementPosition.y);
-        debug('clickElement to ' + selector + ' ' + x + ', ' + y);
+        self.debug('clickElement to ' + selector + ' ' + x + ', ' + y);
         self.page.sendEvent('click', x, y);
 
         resolve(self);
@@ -159,8 +187,8 @@ GhostBastard.prototype.clickElement = function (selector, y) {
 };
 
 GhostBastard.prototype.evaluate = function () {
-    debug('evaluate');
     var self = this;
+    self.debug('evaluate');
     var args = Array.prototype.slice.call(arguments);
     return new RSVP.Promise(function (resolve) {
         var result = self.page.evaluate.apply(self.page, args);
@@ -171,8 +199,8 @@ GhostBastard.prototype.evaluate = function () {
 };
 
 GhostBastard.prototype.injectJs = function (fileName) {
-    debug('injectJs');
     var self = this;
+    self.debug('injectJs');
     var args = Array.prototype.slice.call(arguments);
     return new RSVP.Promise(function (resolve) {
         var result = self.page.includeJs.apply(self.page, fileName, function () {
@@ -182,11 +210,11 @@ GhostBastard.prototype.injectJs = function (fileName) {
 };
 
 GhostBastard.prototype.setJQDatepicker = function (selector, date) {
-    debug('.setJQDatepicker() on ' + selector + ' ' + date);
+    var self = this;
+    self.debug('.setJQDatepicker() on ' + selector + ' ' + date);
     if (!_.isDate(date)) {
         date = moment(date, 'YYYY-MM-DD').toDate();;
     }
-    var self = this;
     return new RSVP.Promise(function (resolve) {
         var result = self.page.evaluate(function (selector, fromDateTimestamp) {
             var fromDate = new Date(fromDateTimestamp);
@@ -200,8 +228,8 @@ GhostBastard.prototype.setJQDatepicker = function (selector, date) {
 };
 
 GhostBastard.prototype.selectOption = function (selector, value) {
-    debug('selectOption on ' + selector + ' ' + value);
     var self = this;
+    self.debug('selectOption on ' + selector + ' ' + value);
     return new RSVP.Promise(function (resolve, reject) {
         var result = self.page.evaluate(function (selector, value) {
             var select = document.querySelector(selector);
@@ -227,8 +255,8 @@ GhostBastard.prototype.selectOption = function (selector, value) {
 
 
 GhostBastard.prototype.fillInput = function (selector, value) {
-    debug('fillElement on ' + selector + ' ' + value);
     var self = this;
+    self.debug('fillElement on ' + selector + ' ' + value);
     return new RSVP.Promise(function (resolve, reject) {
         var result = self.page.evaluate(function (selector, value) {
             var input = document.querySelector(selector);
@@ -250,7 +278,7 @@ GhostBastard.prototype.fillInput = function (selector, value) {
 };
 
 GhostBastard.prototype.wait = function (milliseconds) {
-    debug('wait ' + milliseconds + ' ms');
+    this.debug('wait ' + milliseconds + ' ms');
     return new RSVP.Promise(function (resolve) {
         setTimeout(function () {
             resolve(self);
@@ -259,7 +287,7 @@ GhostBastard.prototype.wait = function (milliseconds) {
 };
 
 GhostBastard.prototype.waitForLoad = function (timeout) {
-    debug('waitForLoad');
+    this.debug('waitForLoad');
     var self = this;
     timeout = timeout || self.options.waitTimeout;
     return new RSVP.Promise(function (resolve) {
@@ -274,7 +302,7 @@ GhostBastard.prototype.waitForLoad = function (timeout) {
 };
 
 GhostBastard.prototype.waitElement = function (selector, needCheckVisible, timeout) {
-    debug('waitElement');
+    this.debug('waitElement');
     var self = this;
     timeout = timeout || self.options.waitTimeout;
     needCheckVisible = !!needCheckVisible;
@@ -295,7 +323,7 @@ GhostBastard.prototype.waitElement = function (selector, needCheckVisible, timeo
 };
 
 GhostBastard.prototype.waitNotElement = function (selector, needCheckVisible, timeout) {
-    debug('waitNotElement');
+    this.debug('waitNotElement');
     var self = this;
     timeout = timeout || self.options.waitTimeout;
     needCheckVisible = !!needCheckVisible;
@@ -323,7 +351,7 @@ GhostBastard.prototype._waitUntil = function (check, timeout, interval) {
         var checker = setInterval(function() {
             var diff = Date.now() - start;
             var res = check();
-            //debug('checkReslut: ' + res);
+            //self.debug('checkReslut: ' + res);
             if (res) {
                 clearInterval(checker);
                 resolve(res);
@@ -337,12 +365,12 @@ GhostBastard.prototype._waitUntil = function (check, timeout, interval) {
 };
 
 GhostBastard.prototype.waitUntil = function (check, timeout, interval) {
-    debug('waitUntil');
+    this.debug('waitUntil');
     return this._waitUntil(check, timeout, interval);
 };
 
 GhostBastard.prototype.close = function () {
-    debug('close');
+    this.debug('close');
     var self = this;
     return new RSVP.Promise(function (resolve) {
         self.page.close.apply(self.page, Array.prototype.slice.call(arguments));
@@ -369,13 +397,13 @@ GhostBastard.prototype.getPlainText = function () {
 };
 
 GhostBastard.prototype.exists = function (selector) {
-    debug(selector);
+    this.debug(selector);
     return this.page.evaluate(function (selector) {
         return document.querySelector(selector) !== null;
     }, selector);
 };
 
-GhostBastard.prototype.debug = debug;
+//GhostBastard.prototype.debug = debug;
 
 
 GhostBastard.extend = function(protoProps, staticProps) {
