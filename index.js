@@ -58,7 +58,7 @@ var GhostBastard = function (options) {
     }
     this.debugScreenshotCounter = 0;
     this.isDebug = options.debug || false;
-    this.name = options.name || 'Ghost Bastard';
+    this.name = this.name || 'Ghost Bastard';
     this.debug = createDebug(this.name);
 };
 
