@@ -1,6 +1,6 @@
 var GhostBastard = require('./index.js');
 
-var ghostBastard = new GhostBastard();
+var ghostBastard = new GhostBastard({name: 'hello'});
 
 ghostBastard.open('http://felicast.github.io/ghost-bastard/test.html')
     .then(function () {
@@ -27,7 +27,11 @@ ghostBastard.open('http://felicast.github.io/ghost-bastard/test.html')
     .then(function () {
         return ghostBastard.wait(1000);
     })
+    .catch(function () {
+        console.log('error');
+    })
     .finally(function () {
+        console.log('end');
         ghostBastard.screenshot('tmp/test.png');
         ghostBastard.close();
         phantom.exit();

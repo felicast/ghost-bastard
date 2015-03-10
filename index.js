@@ -53,7 +53,13 @@ var GhostBastard = function (options) {
         waitTimeout: 30000,
         checkLoadInterval: 50
     });
-    this.debug = createDebug(options.name || 'Ghost Bastard');
+    if (this.initialize) {
+        this.initialize.apply(this, Array.prototype.slice.call(arguments));
+    }
+    this.debugScreenshotCounter = 0;
+    this.isDebug = options.debug || false;
+    this.name = options.name || 'Ghost Bastard';
+    this.debug = createDebug(this.name);
 };
 
 GhostBastard.prototype.open = function (url) {
@@ -78,6 +84,7 @@ GhostBastard.prototype.type = function (text) {
     this.debug('type "'+ text + '"');
     return new RSVP.Promise(function (resolve) {
         self.page.sendEvent('keypress', text);
+        self.debugRender();
         resolve(self);
     });
 };
@@ -103,6 +110,7 @@ GhostBastard.prototype.clickTo = function (x, y) {
     return new RSVP.Promise(function (resolve) {
         self.debug('clickto ' + x + ', ' + y);
         self.page.sendEvent('click', x, y);
+        self.debugRender();
         resolve(self);
     });
 };
@@ -129,6 +137,7 @@ GhostBastard.prototype.clickElement = function (selector) {
         self.debug('clickElement to ' + selector + ' ' + x + ', ' + y);
         self.page.sendEvent('click', x, y);
 
+        self.debugRender();
         resolve(self);
     });
 };
@@ -139,6 +148,7 @@ GhostBastard.prototype.evaluate = function () {
     var args = Array.prototype.slice.call(arguments);
     return new RSVP.Promise(function (resolve) {
         var result = self.page.evaluate.apply(self.page, args);
+        self.debugRender();
         resolve(result);
     });
 };
@@ -148,6 +158,7 @@ GhostBastard.prototype.injectJs = function (fileName) {
     var self = this;
     return new RSVP.Promise(function (resolve) {
         var result = self.page.includeJs.apply(self.page, fileName, function () {
+            self.debugRender();
             resolve(result);
         });
     });
@@ -169,6 +180,7 @@ GhostBastard.prototype.setJQDatepicker = function (selector, date) {
             return true;
         }, selector, date.getTime());
         assert(result, 'Can not find element ' + selector);
+        self.debugRender();
         resolve(result);
     });
 };
@@ -194,13 +206,12 @@ GhostBastard.prototype.selectOption = function (selector, value) {
             }
             return false;
         }, selector, value);
-        setTimeout(function () {
-            if (result) {
-                resolve(result);
-            } else {
-                reject(result);
-            }
-        }, 0);
+        if (result) {
+            self.debugRender();
+            resolve(result);
+        } else {
+            reject(result);
+        }
     });
 };
 
@@ -221,6 +232,7 @@ GhostBastard.prototype.fillInput = function (selector, value) {
             return false;
         }, selector, value);
         if (result) {
+            self.debugRender();
             resolve(result);
         } else {
             reject(result);
@@ -230,8 +242,10 @@ GhostBastard.prototype.fillInput = function (selector, value) {
 
 GhostBastard.prototype.wait = function (milliseconds) {
     this.debug('wait ' + milliseconds + ' ms');
+    var self = this;
     return new RSVP.Promise(function (resolve) {
         setTimeout(function () {
+            self.debugRender();
             resolve(self);
         }, milliseconds);
     });
@@ -305,6 +319,7 @@ GhostBastard.prototype._waitUntil = function (check, timeout, interval) {
             //self.debug('checkReslut: ' + res);
             if (res) {
                 clearInterval(checker);
+                self.debugRender();
                 resolve(res);
             }
             if (diff > timeout) {
@@ -324,6 +339,7 @@ GhostBastard.prototype.close = function () {
     this.debug('close');
     var self = this;
     return new RSVP.Promise(function (resolve) {
+        self.debugRender();
         self.page.close.apply(self.page, Array.prototype.slice.call(arguments));
         resolve(self);
     });
@@ -355,6 +371,13 @@ GhostBastard.prototype.exists = function (selector) {
 GhostBastard.prototype.screenshot = function (path) {
     this.debug('screenshot ' + path);
     return this.page.render.apply(this.page, Array.prototype.slice.call(arguments));
+};
+
+GhostBastard.prototype.debugRender = function () {
+    if (this.isDebug) {
+        this.page.render('tmp/' + this.name + '-' + this.debugScreenshotCounter + '.png');
+        ++this.debugScreenshotCounter;
+    }
 };
 
 //GhostBastard.prototype.debug = debug;
