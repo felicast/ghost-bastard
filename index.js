@@ -61,28 +61,50 @@ var getPromisesCount = function (promise) {
 };
 
 var GhostBastard = function (options) {
-    options = options || {};
     this.page = new WebPage();
     this.options = _.defaults(options, {
         waitStartLoadTimeout: 500,
         waitTimeout: 30000,
-        checkLoadInterval: 50
+        checkLoadInterval: 50,
+        debug: false
     });
     if (this.initialize) {
         this.initialize.apply(this, Array.prototype.slice.call(arguments));
     }
+    this.startedCount = 0;
+    this.endedCount = 0;
     this.debugScreenshotCounter = 0;
-    this.isDebug = options.debug || false;
+    this.isDebug = this.options.debug;
     this.name = this.name || 'Ghost Bastard';
     this.debug = createDebug(this.name);
+
+    this.page.onError = function(msg, trace) {
+        var msgStack = ['ERROR: ' + msg];
+        if (trace && trace.length) {
+            msgStack.push('TRACE:');
+            trace.forEach(function(t) {
+                msgStack.push(' -> ' + t.file + ': ' + t.line + (t.function ? ' (in function "' + t.function +'")' : ''));
+            });
+        }
+        console.error(msgStack.join('\n'));
+    };
+};
+
+GhostBastard.prototype.getProgress = function () {
+    if (this.startedCount === 0) {
+        return 0;
+    }
+    return 1.0 - (this.startedCount - this.endedCount) / this.startedCount;
 };
 
 GhostBastard.prototype.promise = function (message, cb) {
     var self = this;
     this.debug('start ' + message);
+    this.startedCount++;
     return (new RSVP.Promise(cb)).then(function (result) {
         self.debug('end ' + message);
         self.debugRender();
+        self.endedCount++;
         return result;
     });
 };
@@ -150,11 +172,10 @@ GhostBastard.prototype.clickElement = function (selector) {
             }
             return false;
         }, selector);
-        if (elementPosition === false) {
-            throw new Error('element ' + selector + ' not found');
-        }
+        assert(elementPosition, 'element ' + selector + ' not found');
         var x = Math.round(elementPosition.x);
         var y = Math.round(elementPosition.y);
+        self.debug(x + ' ' + y);
         self.page.sendEvent('click', x, y);
 
         resolve(self);
@@ -289,7 +310,6 @@ GhostBastard.prototype.waitElement = function (selector, needCheckVisible, timeo
 };
 
 GhostBastard.prototype.waitNotElement = function (selector, needCheckVisible, timeout) {
-    this.debug('waitNotElement');
     var self = this;
     timeout = timeout || self.options.waitTimeout;
     needCheckVisible = !!needCheckVisible;
