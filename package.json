@@ -2,7 +2,7 @@
   "name": "ghost-bastard",
   "version": "0.0.0",
   "description": "A high level wrapper for Phantomjs. With rsvp promises.",
-  "main": "index.js",
+  "main": "ghost-bastard.js",
   "scripts": {
     "test": "phantomjs test.js"
   },

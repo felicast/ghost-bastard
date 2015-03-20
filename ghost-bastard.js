@@ -30,24 +30,25 @@ var colors = [
 ];
 
 function assert(condition, message) {
-    if (!condition) throw new Error(message)
+    if (!condition) throw new Error(message);
 }
 
-var Logger = function () {
-
+var Logger = function (gb) {
+    this.gb = gb;
+    this.debugColor = colors[_.random(colors.length - 1)];
+    this.prevTime = null;
 };
 
-var createDebug = (function (namespace) {
-    var prevTime;
-    var color = colors.pop();
-    return function (message) {
-        var curr = +new Date();
-        var ms = curr - (prevTime || curr);
-        prevTime = curr;
+Logger.prototype.log = function (message) {
+    var curr = +new Date();
+    var ms = curr - (this.prevTime || curr);
+    this.prevTime = curr;
 
-        console.log('\x1b[' + color + 'm', namespace + ':', '\x1b[0m', message, '(+' + ms + ' ms)');
-    }
-});
+    console.log('\x1b[' + this.debugColor + 'm', this.gb.name + ':', '\x1b[0m', message, '(+' + ms + ' ms)');
+};
+Logger.prototype.error = function (message) {
+    this.log(message);
+};
 
 var getPromisesCount = function (promise) {
     var result = 0;
@@ -68,6 +69,8 @@ var GhostBastard = function (options) {
         checkLoadInterval: 50,
         debug: false
     });
+    this.logger = new Logger(this);
+
     if (this.initialize) {
         this.initialize.apply(this, Array.prototype.slice.call(arguments));
     }
@@ -76,7 +79,7 @@ var GhostBastard = function (options) {
     this.debugScreenshotCounter = 0;
     this.isDebug = this.options.debug;
     this.name = this.name || 'Ghost Bastard';
-    this.debug = createDebug(this.name);
+    //this.debug = createDebug(this.name);
 
     this.page.onError = function(msg, trace) {
         var msgStack = ['ERROR: ' + msg];
@@ -99,10 +102,10 @@ GhostBastard.prototype.getProgress = function () {
 
 GhostBastard.prototype.promise = function (message, cb) {
     var self = this;
-    this.debug('start ' + message);
+    this.logger.log('start ' + message);
     this.startedCount++;
     return (new RSVP.Promise(cb)).then(function (result) {
-        self.debug('end ' + message);
+        self.logger.log('end ' + message);
         self.debugRender();
         self.endedCount++;
         return result;
@@ -175,7 +178,7 @@ GhostBastard.prototype.clickElement = function (selector) {
         assert(elementPosition, 'element ' + selector + ' not found');
         var x = Math.round(elementPosition.x);
         var y = Math.round(elementPosition.y);
-        self.debug(x + ' ' + y);
+        self.logger.log(x + ' ' + y);
         self.page.sendEvent('click', x, y);
 
         resolve(self);
@@ -339,7 +342,7 @@ GhostBastard.prototype._waitUntil = function (message, check, timeout, interval)
         var checker = setInterval(function() {
             var diff = Date.now() - start;
             var res = check();
-            //self.debug('checkReslut: ' + res);
+            //self.logger.log('checkReslut: ' + res);
             if (res) {
                 clearInterval(checker);
                 resolve(res);
@@ -360,6 +363,10 @@ GhostBastard.prototype.close = function () {
     });
 };
 
+GhostBastard.prototype.debug = function () {
+    this.logger.log.apply(this.logger, Array.prototype.slice.call(arguments));
+};
+
 GhostBastard.prototype.setViewport = function (w, h) {
     this.page.viewportSize = {
         width: w,
@@ -377,14 +384,14 @@ GhostBastard.prototype.getPlainText = function () {
 };
 
 GhostBastard.prototype.exists = function (selector) {
-    this.debug(selector);
+    this.logger.log(selector);
     return this.page.evaluate(function (selector) {
         return document.querySelector(selector) !== null;
     }, selector);
 };
 
 GhostBastard.prototype.screenshot = function (path) {
-    this.debug('screenshot ' + path);
+    this.logger.log('screenshot ' + path);
     return this.page.render.apply(this.page, Array.prototype.slice.call(arguments));
 };
 
