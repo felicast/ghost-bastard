@@ -65,7 +65,7 @@ var GhostBastard = function (options) {
     this.page = new WebPage();
     this.options = _.defaults(options, {
         waitStartLoadTimeout: 500,
-        waitTimeout: 30000,
+        waitTimeout: 60000,
         checkLoadInterval: 50,
         debug: false
     });
