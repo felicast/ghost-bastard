@@ -49,6 +49,9 @@ Logger.prototype.log = function (message) {
 Logger.prototype.error = function (message) {
     this.log(message);
 };
+Logger.prototype.debug = function (message) {
+    console.log('\x1b[' + this.debugColor + 'm', this.gb.name + ':', '\x1b[0m', message);
+};
 
 var getPromisesCount = function (promise) {
     var result = 0;
