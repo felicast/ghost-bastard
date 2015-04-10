@@ -123,9 +123,15 @@ GhostBastard.prototype.open = function (url) {
         //push callback to arguments
         args.push(function (status) {
             if (status === 'success') {
-                resolve(self);
+                self.waitForLoad()
+                    .then(function () {
+                        resolve(self);
+                    })
+                    .catch(function () {
+                        resolve(self);
+                    });
             } else {
-                resolve(reject);
+                reject(self);
             }
         });
         return self.page.open.apply(self.page, args);
