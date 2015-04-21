@@ -66,7 +66,7 @@ var getPromisesCount = function (promise) {
 
 var GhostBastard = function (options) {
     this.page = new WebPage();
-    this.options = _.defaults(options, {
+    this.options = _.defaults(options || {}, {
         waitStartLoadTimeout: 500,
         waitTimeout: 60000,
         checkLoadInterval: 50,
